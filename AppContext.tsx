@@ -1,7 +1,15 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Notice, Villager, GalleryImage, Complaint, Review } from './types';
-import { INITIAL_NOTICES, INITIAL_VILLAGERS, GALLERY_IMAGES } from './constants';
+import { 
+  INITIAL_NOTICES, 
+  INITIAL_VILLAGERS, 
+  GALLERY_IMAGES, 
+  INITIAL_REVIEWS,
+  HOME_CONFIG, 
+  SYSTEM_VERSION 
+} from './constants';
+import { api, SyncState } from './services/api';
 
 interface HomeConfig {
   heroImageUrl: string;
@@ -16,134 +24,184 @@ interface AppContextType {
   reviews: Review[];
   homeConfig: HomeConfig;
   complaints: Complaint[];
+  isProcessing: boolean;
+  processMessage: string;
+  lastUpdate: string | null;
+  isConnected: boolean;
   addNotice: (notice: Omit<Notice, 'id'>) => void;
   deleteNotice: (id: string) => void;
   addVillager: (villager: Omit<Villager, 'id'>) => void;
   deleteVillager: (id: string) => void;
-  addImage: (image: Omit<GalleryImage, 'id'>) => void;
+  addImage: (image: { url: string; title: string; description: string; file?: File }) => Promise<boolean>;
   deleteImage: (id: string) => void;
-  addReview: (review: Omit<Review, 'id'>) => void;
+  addReview: (review: Omit<Review, 'id'> & { avatarFile?: File }) => Promise<void>;
   deleteReview: (id: string) => void;
   updateHomeConfig: (config: HomeConfig) => void;
   addComplaint: (complaint: Omit<Complaint, 'id' | 'date' | 'status'>) => void;
   deleteComplaint: (id: string) => void;
+  resetSystem: () => void;
 }
-
-const INITIAL_REVIEWS: Review[] = [
-  { 
-    id: '1', 
-    name: 'Suresh Chandra', 
-    content: 'The new solar lights in our street have made a huge difference. Safety has improved significantly for our children.', 
-    rating: 5, 
-    avatarUrl: 'https://i.pravatar.cc/150?u=suresh' 
-  },
-  { 
-    id: '2', 
-    name: 'Meena Patra', 
-    content: 'Panchayat updates on this portal are very helpful. I don\'t have to walk to the office anymore to check notices.', 
-    rating: 4, 
-    avatarUrl: 'https://i.pravatar.cc/150?u=meena' 
-  },
-  { 
-    id: '3', 
-    name: 'Gopal Sahu', 
-    content: 'Clean drinking water campaign was a great initiative. The village health has noticeably improved this year.', 
-    rating: 5, 
-    avatarUrl: 'https://i.pravatar.cc/150?u=gopal' 
-  }
-];
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const FIXED_GALLERY_IDS = new Set(GALLERY_IMAGES.map((g) => g.id));
+const FIXED_REVIEW_IDS = new Set(INITIAL_REVIEWS.map((r) => r.id));
+const STORAGE_VERSION_KEY = 'bp_sys_version';
+const POLL_MS = 4000;
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [notices, setNotices] = useState<Notice[]>(() => {
-    const saved = localStorage.getItem('village_notices');
-    return saved ? JSON.parse(saved) : INITIAL_NOTICES;
-  });
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [villagers, setVillagers] = useState<Villager[]>(() => {
-    const saved = localStorage.getItem('village_villagers');
-    return saved ? JSON.parse(saved) : INITIAL_VILLAGERS;
-  });
+  useEffect(() => {
+    const savedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
+    if (savedVersion !== SYSTEM_VERSION) {
+      localStorage.setItem(STORAGE_VERSION_KEY, SYSTEM_VERSION);
+    }
+  }, []);
 
-  const [gallery, setGallery] = useState<GalleryImage[]>(() => {
-    const saved = localStorage.getItem('village_gallery');
-    return saved ? JSON.parse(saved) : GALLERY_IMAGES;
-  });
+  const [notices] = useState<Notice[]>(INITIAL_NOTICES);
+  const [villagers] = useState<Villager[]>(INITIAL_VILLAGERS);
+  const [homeConfig] = useState<HomeConfig>(HOME_CONFIG);
 
-  const [reviews, setReviews] = useState<Review[]>(() => {
-    const saved = localStorage.getItem('village_reviews');
-    return saved ? JSON.parse(saved) : INITIAL_REVIEWS;
-  });
+  const [userGallery, setUserGallery] = useState<GalleryImage[]>([]);
+  const [userReviews, setUserReviews] = useState<Review[]>([]);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processMessage, setProcessMessage] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
 
-  const [homeConfig, setHomeConfig] = useState<HomeConfig>(() => {
-    const saved = localStorage.getItem('village_home_config');
-    return saved ? JSON.parse(saved) : {
-      heroImageUrl: 'https://picsum.photos/seed/badapathuria/1920/600',
-      welcomeHeading: 'Welcome to Badapathuria Village',
-      welcomeSubheading: 'Connecting our community through information, services, and announcements. A village built on unity, culture, and progress.'
+  const gallery = [...GALLERY_IMAGES, ...userGallery];
+  const reviews = [...INITIAL_REVIEWS, ...userReviews];
+
+  const applySync = useCallback((data: SyncState) => {
+    setUserGallery(data.gallery);
+    setUserReviews(data.reviews);
+    setComplaints(data.complaints);
+    setLastUpdate(data.lastUpdate);
+    setIsConnected(true);
+  }, []);
+
+  const refresh = useCallback(async () => {
+    try {
+      const data = await api.getSync();
+      applySync(data);
+    } catch {
+      setIsConnected(false);
+    }
+  }, [applySync]);
+
+  useEffect(() => {
+    refresh();
+    pollRef.current = setInterval(refresh, POLL_MS);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
     };
-  });
+  }, [refresh]);
 
-  const [complaints, setComplaints] = useState<Complaint[]>(() => {
-    const saved = localStorage.getItem('village_complaints');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const addImage = async (image: { url: string; title: string; description: string; file?: File }) => {
+    if (gallery.length >= 60) return false;
 
-  useEffect(() => localStorage.setItem('village_notices', JSON.stringify(notices)), [notices]);
-  useEffect(() => localStorage.setItem('village_villagers', JSON.stringify(villagers)), [villagers]);
-  useEffect(() => localStorage.setItem('village_gallery', JSON.stringify(gallery)), [gallery]);
-  useEffect(() => localStorage.setItem('village_reviews', JSON.stringify(reviews)), [reviews]);
-  useEffect(() => localStorage.setItem('village_home_config', JSON.stringify(homeConfig)), [homeConfig]);
-  useEffect(() => localStorage.setItem('village_complaints', JSON.stringify(complaints)), [complaints]);
+    setIsProcessing(true);
+    setProcessMessage('Saving contribution...');
 
-  const addNotice = (notice: Omit<Notice, 'id'>) => {
-    const newNotice = { ...notice, id: Date.now().toString() };
-    setNotices([newNotice, ...notices]);
+    try {
+      if (image.file) {
+        await api.uploadGallery(image.file, image.title, image.description);
+      } else {
+        await api.addGallery({
+          url: image.url,
+          title: image.title,
+          description: image.description,
+        });
+      }
+      await refresh();
+      return true;
+    } catch {
+      return false;
+    } finally {
+      setIsProcessing(false);
+      setProcessMessage('');
+    }
   };
 
-  const deleteNotice = (id: string) => setNotices(notices.filter(n => n.id !== id));
-
-  const addVillager = (villager: Omit<Villager, 'id'>) => {
-    const newVillager = { ...villager, id: Date.now().toString() };
-    setVillagers([newVillager, ...villagers]);
+  const deleteImage = async (id: string) => {
+    if (FIXED_GALLERY_IDS.has(id)) return;
+    try {
+      await api.deleteGallery(id);
+      await refresh();
+    } catch {
+      /* ignore */
+    }
   };
 
-  const deleteVillager = (id: string) => setVillagers(villagers.filter(v => v.id !== id));
-
-  const addImage = (image: Omit<GalleryImage, 'id'>) => {
-    const newImage = { ...image, id: Date.now().toString() };
-    setGallery([newImage, ...gallery]);
+  const addReview = async (review: Omit<Review, 'id'> & { avatarFile?: File }) => {
+    let avatarUrl = review.avatarUrl;
+    if (review.avatarFile) {
+      const result = await api.uploadReviewAvatar(review.avatarFile);
+      avatarUrl = result.avatarUrl;
+    }
+    await api.addReview({
+      name: review.name,
+      content: review.content,
+      rating: review.rating,
+      avatarUrl,
+    });
+    await refresh();
   };
 
-  const deleteImage = (id: string) => setGallery(gallery.filter(i => i.id !== id));
-
-  const addReview = (review: Omit<Review, 'id'>) => {
-    const newReview = { ...review, id: Date.now().toString() };
-    setReviews([newReview, ...reviews]);
+  const deleteReview = async (id: string) => {
+    if (FIXED_REVIEW_IDS.has(id)) return;
+    try {
+      await api.deleteReview(id);
+      await refresh();
+    } catch {
+      /* ignore */
+    }
   };
 
-  const deleteReview = (id: string) => setReviews(reviews.filter(r => r.id !== id));
-
-  const updateHomeConfig = (config: HomeConfig) => setHomeConfig(config);
-
-  const addComplaint = (complaint: Omit<Complaint, 'id' | 'date' | 'status'>) => {
-    const newComplaint: Complaint = {
-      ...complaint,
-      id: Date.now().toString(),
-      date: new Date().toISOString().split('T')[0],
-      status: 'pending'
-    };
-    setComplaints([newComplaint, ...complaints]);
+  const addComplaint = async (complaint: Omit<Complaint, 'id' | 'date' | 'status'>) => {
+    try {
+      await api.addComplaint(complaint);
+      await refresh();
+    } catch {
+      /* ignore */
+    }
   };
 
-  const deleteComplaint = (id: string) => setComplaints(complaints.filter(c => c.id !== id));
+  const deleteComplaint = async (id: string) => {
+    try {
+      await api.deleteComplaint(id);
+      await refresh();
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const addNotice = () => {};
+  const deleteNotice = () => {};
+  const addVillager = () => {};
+  const deleteVillager = () => {};
+  const updateHomeConfig = () => {};
+
+  const resetSystem = async () => {
+    if (window.confirm('Delete all user-added photos and messages from the server?')) {
+      try {
+        await api.reset();
+        await refresh();
+      } catch {
+        /* ignore */
+      }
+    }
+  };
 
   return (
     <AppContext.Provider value={{
       notices, villagers, gallery, reviews, homeConfig, complaints,
+      isProcessing, processMessage, lastUpdate, isConnected,
       addNotice, deleteNotice, addVillager, deleteVillager,
-      addImage, deleteImage, addReview, deleteReview, updateHomeConfig, addComplaint, deleteComplaint
+      addImage, deleteImage, addReview, deleteReview, updateHomeConfig,
+      addComplaint, deleteComplaint, resetSystem
     }}>
       {children}
     </AppContext.Provider>

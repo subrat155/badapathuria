@@ -173,7 +173,10 @@ const Footer = () => {
           </Link>
         </div>
         <p className="text-black/60 text-sm mb-2">
-          © 2024 Village of Badapathuria. All Rights Reserved.
+          © 2026 Village of Badapathuria. All Rights Reserved.
+        </p>
+        <p className="text-black/60 text-sm mb-2">
+         Designed and Developed By Papu&Sonu.
         </p>
         <p className="text-black/40 text-xs flex items-center justify-center gap-1">
           Built with <span className="text-red-400">❤</span> for the community.

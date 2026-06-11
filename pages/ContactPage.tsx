@@ -48,9 +48,9 @@ const ContactPage: React.FC = () => {
              
              <div className="space-y-8">
                 {[
-                  { icon: <MapPin />, title: 'Village Office', detail: 'Main Street, Badapathuria, Ganjam, Odisha - 76XXXX', color: 'bg-blue-50 text-blue-600' },
-                  { icon: <Phone />, title: 'Emergency Contact', detail: '+91 67425-XXXXX', color: 'bg-red-50 text-red-600' },
-                  { icon: <Mail />, title: 'Official Email', detail: 'contact@badapathuria.gov.in', color: 'bg-green-50 text-green-600' },
+                  { icon: <MapPin />, title: 'Village Office', detail: ' Badapathuria,Block-Ranpur, Odisha - 752064', color: 'bg-blue-50 text-blue-600' },
+                  { icon: <Phone />, title: 'Emergency Contact', detail: '+91 9556545345', color: 'bg-red-50 text-red-600' },
+                  { icon: <Mail />, title: 'Official Email', detail: 'contact@badapathuria.in', color: 'bg-green-50 text-green-600' },
                   { icon: <Clock />, title: 'Office Hours', detail: 'Mon - Sat: 10:00 AM - 05:00 PM', color: 'bg-yellow-50 text-yellow-600' },
                 ].map((item, i) => (
                   <div key={i} className="flex gap-6 group">
@@ -78,7 +78,7 @@ const ContactPage: React.FC = () => {
 
              <div className="flex items-center gap-3 mb-8">
                 <MessageSquare className="text-[#88AB8E]" size={24} />
-                <h3 className="text-2xl font-bold text-black">Send a Suggestion</h3>
+                <h3 className="text-2xl font-bold text-black">Send a Complaint</h3>
              </div>
              <form onSubmit={handleSend} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

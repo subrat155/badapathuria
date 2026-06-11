@@ -1,16 +1,20 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Badapathuria Village Portal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <link href="output.css" rel="stylesheet" />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
       body {
-        font-family: 'Outfit', sans-serif;
-        background-color: #F9F8F4;
+        font-family: "Outfit", sans-serif;
+        background-color: #f9f8f4;
       }
       .custom-scrollbar::-webkit-scrollbar {
         width: 6px;
@@ -19,7 +23,7 @@
         background: #f1f1f1;
       }
       .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #88AB8E;
+        background: #88ab8e;
         border-radius: 10px;
       }
 
@@ -37,9 +41,9 @@
 
       .animate-badapathuria {
         background: linear-gradient(
-          to right, 
-          #9ca3af 0%, 
-          #ffffff 50%, 
+          to right,
+          #9ca3af 0%,
+          #ffffff 50%,
           #9ca3af 100%
         );
         background-size: 200% auto;
@@ -51,20 +55,10 @@
         display: inline-block;
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "recharts": "https://esm.sh/recharts@^3.7.0",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "lucide-react": "https://esm.sh/lucide-react@^0.564.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0"
-  }
-}
-</script>
-</head>
+  </head>
   <body>
     <div id="root"></div>
+
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

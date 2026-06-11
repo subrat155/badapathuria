@@ -9,37 +9,37 @@ const ServicesPage: React.FC = () => {
       title: 'Schools',
       icon: <School className="text-[#88AB8E]" size={32} />,
       desc: 'Primary and secondary schools serving the village children with quality education and basic amenities.',
-      details: '2 Primary Schools, 1 High School'
+      details: '1-Primary and Secondary school'
     },
     {
       title: 'Health Center',
       icon: <HeartPulse className="text-[#88AB8E]" size={32} />,
       desc: 'Local clinic providing primary health care, maternity services, and emergency first aid for all residents.',
-      details: 'Open 9 AM - 6 PM, 24/7 Helpline'
+      details: 'Patana,Open 24 Hours, 24/7 Helpline'
     },
     {
       title: 'Government Schemes',
       icon: <ScrollText className="text-[#88AB8E]" size={32} />,
       desc: 'Information about rural welfare programs like MGNREGA, Ration Cards, and Housing schemes.',
-      details: 'Apply at Panchayat Office'
+      details: 'Apply at Panchayat Office,Gadabanikilo'
     },
     {
       title: 'Emergency Contacts',
       icon: <PhoneCall className="text-[#88AB8E]" size={32} />,
       desc: 'Village office, emergency numbers for police, fire, and ambulance services available locally.',
-      details: 'Call 112 for general emergencies'
+      details: 'Call 112 for general emergencies,Ranapur'
     },
     {
       title: 'Panchayat Office',
       icon: <Building2 className="text-[#88AB8E]" size={32} />,
       desc: 'Central hub for village administration, certificates, and community decision-making.',
-      details: 'Mondays - Saturdays'
+      details: 'Gadabanikilo,Open-Monday to Saturday'
     },
     {
       title: 'Water Supply',
       icon: <Droplets className="text-[#88AB8E]" size={32} />,
       desc: 'Maintenance of clean drinking water systems and community well management.',
-      details: 'Daily morning supply'
+      details: 'Daily morning supply at-6A.M'
     },
   ];
 

@@ -9,25 +9,23 @@ const GalleryPage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      addImage({
-        url: base64String,
-        title: 'Community Contribution',
-        description: `Uploaded by a community member on ${new Date().toLocaleDateString()}`
-      });
-      setIsUploading(false);
+    const success = await addImage({
+      file,
+      url: '',
+      title: 'Community Contribution',
+      description: `Uploaded by a community member on ${new Date().toLocaleDateString()}`
+    });
+    setIsUploading(false);
+    if (success) {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    };
-    reader.readAsDataURL(file);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (

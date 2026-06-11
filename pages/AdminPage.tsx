@@ -9,6 +9,12 @@ import {
 } from 'lucide-react';
 import { useApp } from '../AppContext';
 
+const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], filename, { type: blob.type });
+};
+
 const AdminPage: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState('');
@@ -442,9 +448,16 @@ const AdminPage: React.FC = () => {
                   className="w-full px-5 py-4 bg-[#F9F8F4] rounded-2xl text-sm"
                 />
                 <button 
-                  onClick={() => {
+                  onClick={async () => {
                     if (newImage.url && newImage.title) {
-                      addImage(newImage);
+                      const file = newImage.url.startsWith('data:')
+                        ? await dataUrlToFile(newImage.url, 'admin-upload.jpg')
+                        : undefined;
+                      await addImage({
+                        ...newImage,
+                        url: file ? '' : newImage.url,
+                        file,
+                      });
                       setNewImage({ url: '', title: '', description: '' });
                     }
                   }}
@@ -607,9 +620,16 @@ const AdminPage: React.FC = () => {
                   </div>
                 </div>
                 <button 
-                  onClick={() => {
+                  onClick={async () => {
                     if (newReview.name && newReview.content && newReview.avatarUrl) {
-                      addReview(newReview);
+                      const avatarFile = newReview.avatarUrl.startsWith('data:')
+                        ? await dataUrlToFile(newReview.avatarUrl, 'avatar.jpg')
+                        : undefined;
+                      await addReview({
+                        ...newReview,
+                        avatarUrl: avatarFile ? '' : newReview.avatarUrl,
+                        avatarFile,
+                      });
                       setNewReview({ name: '', content: '', rating: 5, avatarUrl: '' });
                     }
                   }}
